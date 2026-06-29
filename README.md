@@ -61,3 +61,13 @@ The following command exports all available layers, and stores processing time a
 ```ps1
 python benchmarks\benchmark.py --timeout 30 "USER/PASSWORD@ALIAS"
 ```
+
+## Roadmap
+
+For now, this is just a POC with no official support. These are the possible next steps:
+
+- fix crashes when used from within QGIS
+- test with more data and adapt accordingly (single/multi geometries, arcs, ensure no precision loss, etc.)
+- [rewrite the driver in C](https://gdal.org/en/stable/tutorials/vector_driver_tut.html) for better performance
+- MS SQL variant
+- consider integration in GDAL
