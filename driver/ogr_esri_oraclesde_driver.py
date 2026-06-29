@@ -72,14 +72,25 @@ class Layer(BaseLayer):
         self.name = name
         self.fid_name = "OBJECTID"
 
-        # optional
-        self.metadata = {}
-
         # uncomment if __iter__() honour self.attribute_filter / self.spatial_filter
         # self.iterator_honour_attribute_filter = True
         self.iterator_honour_spatial_filter = True
         # self.feature_count_honour_attribute_filter = True
         # self.feature_count_honour_spatial_filter = True
+
+    def metadata(self, domain):
+        if domain is None:
+            with self._connection.cursor() as cursor:
+                sql = """
+                SELECT SUM(bytes)/1024/1024 AS SIZE_MB
+                FROM dba_segments
+                WHERE owner=:bind_owner AND segment_name=:bind_table AND segment_type = 'TABLE'
+                GROUP BY segment_name
+                """
+                params = [self._owner, self._table]
+                for row in execute_as_dicts(cursor, sql, params):
+                    return {"SIZE_MB": str(row["SIZE_MB"])}
+        return None
 
     @cached_property
     def geometry_fields(self):

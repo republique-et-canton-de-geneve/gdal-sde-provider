@@ -1,27 +1,38 @@
-import pathlib
 import argparse
 from pathlib import Path
 import random
-import subprocess
 import json
-from osgeo import ogr
+from typing import Any
 from datetime import datetime
-
 from time import time
+from osgeo import gdal, ogr
 
-DEFAULT_OUTPUT = Path(__file__).parent.joinpath("tmp_output")
+
+DEFAULT_OUTPUT = Path("benchmark_output")
+DEFAULT_REPORT = Path("benchmark.json")
+
+
+def _get(dict: dict | list, *keys, default=None) -> Any:
+    for key in keys:
+        try:
+            dict = dict[key]
+        except (KeyError, IndexError):
+            return default
+    return dict
 
 
 def run(
     dsn: str,
     output_dir: Path,
-    report: Path | None = None,
+    report: Path,
     overwrite: bool = False,
     count: int | None = None,
     shuffle=False,
+    include: str | None = None,
     timeout: int | None = None,
     retry: bool = False,
 ) -> None:
+    ogr.UseExceptions()
 
     ds = ogr.Open(f"SDEORAESRI:{dsn}")
     if ds is None:
@@ -30,19 +41,22 @@ def run(
     # collect all layers
     layers = []
     for layer in ds:
-        print(layer.GetName(), flush=True)
         layers.append(layer.GetName())
     ds.Close()
+    print(f"Found {len(layers)} layers")
 
     if shuffle:
         random.shuffle(layers)
     if count:
         layers = layers[:count]
+    if include:
+        layers = [lyr for lyr in layers if include in lyr]
+
+    print(f"Will export {len(layers)} layers")
 
     output_dir.mkdir(exist_ok=True)
+    report.parent.mkdir(exist_ok=True)
 
-    report = report or output_dir.joinpath("report.json")
-    print(report.absolute())
     if report.exists():
         results = json.load(report.open("r"))
         print(f"Continuing with {len(results)} items")
@@ -58,7 +72,8 @@ def run(
                 flush=True,
             )
             if layer in results:
-                prev_res, prev_val = results[layer].split(":", maxsplit=1)
+                prev_res = results[layer]["status"]
+                prev_val = results[layer]["duration"]
                 if overwrite:
                     pass
                 elif prev_res == "SUCCESS":
@@ -75,29 +90,50 @@ def run(
             if output.exists():
                 output.unlink()
 
+            # Layer DSN
+            lyr_dsn = f"SDEORAESRI:{dsn}|{layer}"
+
+            # Get metadata
+            lyr_info = _get(gdal.VectorInfo(lyr_dsn, format="json"), "layers", 0)
+
+            # Extract data
+            status = None
+            duration = None
+            debug = None
+
             t0 = time()
+            did_timeout = False
+
+            def timeout_callback(complete, message, data):
+                nonlocal did_timeout
+                did_timeout |= timeout is not None and (time() - t0 >= timeout)
+                return not did_timeout
+
             try:
-                msg = "ABORTED:?"
-                subprocess.check_output(
-                    ["ogr2ogr", output, f"SDEORAESRI:{dsn}|{layer}"],
-                    timeout=timeout,
-                    stderr=subprocess.STDOUT,
-                )
-                msg = f"SUCCESS:{time() - t0:.2f}s"
+                gdal.VectorTranslate(str(output), lyr_dsn, callback=timeout_callback)
+                status = "SUCCESS"
+                duration = time() - t0
             except Exception as e:
-                if isinstance(e, subprocess.CalledProcessError):
-                    msg = f"ERROR:{e.output.decode()}"
-                elif isinstance(e, subprocess.TimeoutExpired):
-                    msg = f"TIMEDOUT:{timeout}"
+                if did_timeout:
+                    status = "TIMEDOUT"
+                    duration = timeout
                 else:
-                    msg = f"ERROR:{e}"
+                    status = "ERROR"
+                    duration = time() - t0
+                    debug = str(e)
                 if output and output.exists():
                     output.unlink()
-                continue
-            finally:
-                print(msg)
-                results[layer] = msg
-                json.dump(results, report.open("w"), indent=2)
+            print(f"{status} in {duration:.2f}s")
+            results[layer] = {
+                "status": status,
+                "duration": duration,
+                "debug": debug,
+                "features_count": _get(lyr_info, "featureCount"),
+                "fields_count": len(_get(lyr_info, "fields", default=[])),
+                "geom_type": _get(lyr_info, "geometryFields", 0, "type"),
+                "size_mb": float(_get(lyr_info, "metadata", "", "SIZE_MB", default=0)),
+            }
+            json.dump(results, report.open("w"), indent=2)
 
     except KeyboardInterrupt:
         print("interrupted!")
@@ -113,9 +149,10 @@ if __name__ == "__main__":
     parser.add_argument("dsn")
     parser.add_argument("--count", type=int)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--report", type=Path)
+    parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--shuffle", action="store_true")
+    parser.add_argument("--include", type=str)
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--retry", action="store_true")
     args = parser.parse_args()
@@ -126,6 +163,7 @@ if __name__ == "__main__":
         overwrite=args.overwrite,
         count=args.count,
         shuffle=args.shuffle,
+        include=args.include,
         timeout=args.timeout,
         retry=args.retry,
     )

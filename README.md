@@ -59,7 +59,7 @@ For quick tests, a pyQGIS script is included, run it with `python-qgis qgis_cli.
 The following command exports all available layers, and stores processing time and errors into `report.json`.
 
 ```ps1
-python benchmarks\benchmark.py --timeout 30 "USER/PASSWORD@ALIAS"
+python benchmark.py --timeout 30 "USER/PASSWORD@ALIAS"
 ```
 
 ## Roadmap
