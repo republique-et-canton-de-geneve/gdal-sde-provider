@@ -38,8 +38,8 @@ DBTYPE_TO_OGRTYPE: dict[tuple[str, int | None], str] = {
 GEOMSUBTYPE_TO_OGRGEOM = {
     1: "Point",  # Point
     2: "MultiPoint",  # Multipoint
-    3: "LineString",  # Line
-    4: "Polygon",  # Polygon
+    3: "MultiLineString",  # Line
+    4: "MultiPolygon",  # Polygon
     9: "Unknown",  # Multipatch
     None: "Unknown",  # Seems some layers have NONE ?
 }
