@@ -70,7 +70,7 @@ class Layer(BaseLayer):
         self._owner, self._table = name.split(".", maxsplit=1)
 
         self.name = name
-        self.fid_name = "OBJECTID"
+        self.fid_name = "OBJECTID"  # overriden below
 
         # uncomment if __iter__() honour self.attribute_filter / self.spatial_filter
         # self.iterator_honour_attribute_filter = True
@@ -135,11 +135,13 @@ class Layer(BaseLayer):
     def fields(self):
         fields = []
         with self._connection.cursor() as cursor:
-            sql = "SELECT COLUMN_NAME, DATA_TYPE, DATA_SCALE FROM ALL_TAB_COLUMNS WHERE OWNER=:bind_owner AND TABLE_NAME=:bind_table"
+            sql = "SELECT COLUMN_NAME, DATA_TYPE, DATA_SCALE, COLUMN_ID FROM ALL_TAB_COLUMNS WHERE OWNER=:bind_owner AND TABLE_NAME=:bind_table"
             params = [self._owner, self._table]
             for row in execute_as_dicts(cursor, sql, params):
                 if row["DATA_TYPE"] == DB_GEOMTYPE:
                     continue
+                if row["COLUMN_ID"] == 1:
+                    self.fid_name = row["COLUMN_NAME"]
                 type_key = (row["DATA_TYPE"], row["DATA_SCALE"])
                 try:
                     db_type = DBTYPE_TO_OGRTYPE[type_key]
@@ -252,7 +254,7 @@ class Layer(BaseLayer):
 
                 yield {
                     "type": "OGRFeature",
-                    "id": row["OBJECTID"],
+                    "id": row[self.fid_name],
                     "fields": row,
                     "geometry_fields": geoms,
                     # "style": None,

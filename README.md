@@ -62,6 +62,12 @@ The following command exports all available layers, and stores processing time a
 python benchmark.py --timeout 30 "USER/PASSWORD@ALIAS"
 ```
 
+## Limitations
+
+For now, the following limitations apply:
+
+- the first column of the table is considered to be the primary key (COLUMN_ID=1 in ALL_TAB_COLUMNS)
+
 ## Roadmap
 
 For now, this is just a POC with no official support. These are the possible next steps:
