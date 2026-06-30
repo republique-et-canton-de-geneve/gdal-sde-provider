@@ -45,7 +45,7 @@ GEOMSUBTYPE_TO_OGRGEOM = {
     3: "Geometry",  # MultiLineString
     4: "Geometry",  # MultiPolygon
     9: "Geometry",  # Unknown
-    None: "Unknown",  # Seems some layers have NONE ?
+    None: "Geometry",  # Seems some layers have NONE ?
 }
 
 
