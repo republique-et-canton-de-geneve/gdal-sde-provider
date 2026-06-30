@@ -118,9 +118,9 @@ def run(
                     status = "TIMEDOUT"
                     duration = timeout
                 else:
-                    status = "ERROR"
                     duration = time() - t0
                     debug = str(e)
+                    status = "ABORT" if "KeyboardInterrupt" in debug else "ERROR"
                 if output and output.exists():
                     output.unlink()
             print(f"{status} in {duration:.2f}s")
