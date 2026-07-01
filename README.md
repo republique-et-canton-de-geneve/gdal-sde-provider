@@ -30,7 +30,7 @@ set GDAL_PYTHON_DRIVER_PATH=%CD%\driver
 
 We're set !
 
-In the following examples, you can also provide `HOST:PORT?SERVICE` instead of `ALIAS`. You can also optionnaly filter by layer at provider level by specifying `|SCHEMA.TABLE`.
+In the following examples, you can also provide `HOST:PORT/SERVICE` instead of `ALIAS`. You can also optionnaly filter by layer at provider level by specifying `|SCHEMA.TABLE`.
 
 ```ps1
 # ensure GDAL finds the driver (you should see `SDEORAESRI -vector- (ro): Custom Python provider [...]` as output)
