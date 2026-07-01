@@ -3,11 +3,11 @@
 > [!caution]
 > This is **work in progress** and for now still **highly experimental** (but working in some cases).
 
-**Proof-of-concept** for a GDAL/OGR driver able to read vector data from an Oracle ESRI Geodatabase.
+**Proof-of-concept** for a [GDAL/OGR](https://github.com/OSGeo/gdal) driver able to read vector data from an Oracle ESRI Geodatabase.
 
-The goal is to make it possible to read such databases without requiring proprietary tools such as ArcPy or FME. Having this capability as an GDAL/OGR driver makes it possible to use in various contexts (standalone CLI, python, but also advanced software using GDAL such as QGIS or DuckDB).
+The goal is to make it possible to read such databases without requiring proprietary tools such as ArcPy or FME. Having this capability as an GDAL/OGR driver makes it possible to use in various contexts (standalone CLI, python, but also advanced software using GDAL such as [QGIS](https://qgis.org/) or [DuckDB](https://duckdb.org/docs/current/core_extensions/spatial/gdal)).
 
-If the POC is conclusive, the driver could be translated to C for better performance, or maybe (if deemed acceptable) upstreamed as a standard GDAL/OGR driver. Worth noting that [it seems](https://www.osgeo.org/foundation-news/gdal-ogr-3-2-0-is-released/?utm_source=chatgpt.com#:~:text=Removal%20of%20GDAL%20and%20OGR%20ArcSDE%20drivers) such a driver used to exist at some point in GDAL.
+If the POC is conclusive, the driver could be translated to C for better performance, or maybe (if deemed acceptable) upstreamed as a standard GDAL/OGR driver. The project is licensed under MIT to allow for that. Worth noting that [it seems](https://www.osgeo.org/foundation-news/gdal-ogr-3-2-0-is-released/?utm_source=chatgpt.com#:~:text=Removal%20of%20GDAL%20and%20OGR%20ArcSDE%20drivers) such a driver used to exist at some point in GDAL.
 
 The code was adapted from the [Vector driver in Python implementation tutorial](https://gdal.org/en/stable/tutorials/vector_python_driver.html), following [this example](https://github.com/OSGeo/gdal/blob/master/examples/pydrivers/ogr_DUMMY.py).
 
